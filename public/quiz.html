@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Quiz - Ocean Literacy</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Quiz specific inline styles to keep style.css clean */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .quiz-btn {
+            background-color: #0077b6;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .quiz-btn:hover { background-color: #03045e; }
+        .correct { background-color: #2a9d8f !important; }
+        .wrong { background-color: #e63946 !important; }
+        .score-text { font-size: 20px; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧠 Ocean Eco Quiz</h1>
+        <p>Test your ocean literacy and protect marine life!</p>
+    </header>
+
+    <main class="container">
+        <div class="info-section">
+            <h2 id="question">Question loading...</h2>
+            <div id="answer-buttons" class="btn-grid">
+                <!-- Buttons will be injected here by JavaScript -->
+            </div>
+            <div style="text-align: right;">
+                <button id="next-btn" class="btn" style="display: none; background-color: #03045e; border:none; cursor:pointer;">Next Question ➔</button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="index.html" class="btn" style="background-color: #6c757d;">⬅ Back to Home</a>
+        </div>
+    </main>
+
+    <script src="quiz.js"></script>
+</body>
+</html>

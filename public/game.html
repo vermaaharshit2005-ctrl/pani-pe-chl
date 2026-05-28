@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Shark Eco-Scanner - Deep Sea Horizons</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #010610;
+            font-family: system-ui, -apple-system, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .stat-box {
+            background: rgba(2, 6, 18, 0.85);
+            border: 1px solid rgba(14, 165, 233, 0.25);
+            padding: 14px 28px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+        .health-bar-bg {
+            width: 150px;
+            height: 12px;
+            background: #1e293b;
+            border-radius: 99px;
+            display: inline-block;
+            margin-left: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            vertical-align: middle;
+        }
+        #health-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f43f5e, #10b981);
+            transition: width 0.2s ease;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(1, 4, 9, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+            display: none;
+            padding: 20px;
+        }
+        .btn {
+            margin-top: 25px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 🏆 लीडरबोर्ड टेबल की सुंदर स्टाइलिंग */
+        .leaderboard-box {
+            margin-top: 25px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .leaderboard-table th {
+            color: #38bdf8;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        .leaderboard-table tr:last-child td {
+            border-bottom: none;
+        }
+        .rank-1 { color: #fbbf24; font-weight: bold; } /* Gold */
+        .rank-2 { color: #cbd5e1; font-weight: bold; } /* Silver */
+        .rank-3 { color: #b45309; font-weight: bold; } /* Bronze */
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="stat-box">📡 DATA LOGGED: <span id="score-val" style="color: #38bdf8;">0 TB</span></div>
+        <div class="stat-box">🦈 APEX SHARK: <div class="health-bar-bg"><div id="health-fill"></div></div></div>
+        <div class="stat-box">⏱️ TIME LEFT: <span id="time-val" style="color: #f43f5e;">45</span>s</div>
+    </div>
+
+    <div id="game-over-screen">
+        <h1 id="over-title" style="font-size: 42px; text-shadow: 0 0 25px rgba(56,189,248,0.5); letter-spacing: 1px;">SURVEY COMPLETED</h1>
+        <p id="over-msg" style="font-size: 22px; color: #94a3b8; margin-top: 10px;">Bio-Metrics Logged: 0 Terabytes</p>
+        
+        <div class="leaderboard-box">
+            <h3 style="text-align: center; color: #38bdf8; letter-spacing: 1px;">🏆 TOP 5 ECO-MISSIONS</h3>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-rows">
+                    <tr>
+                        <td colspan="4" style="color: #64748b;">Loading ranking logs...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="btn" onclick="location.reload()">🦈 Re-Dive Mission</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const scoreEl = document.getElementById("score-val");
+        const healthFill = document.getElementById("health-fill");
+        const timeEl = document.getElementById("time-val");
+        const gameOverScreen = document.getElementById("game-over-screen");
+        const overTitle = document.getElementById("over-title");
+        const overMsg = document.getElementById("over-msg");
+        const leaderboardRows = document.getElementById("leaderboard-rows");
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let score = 0;
+        let health = 60; 
+        let timeLeft = 45;
+        let gameOver = false;
+        let gameTimer;
+        let globalTime = 0;
+        let screenFlash = { active: false, color: "" };
+
+        const shark = {
+            x: window.innerWidth / 4,
+            y: window.innerHeight / 2,
+            targetX: window.innerWidth / 4,
+            targetY: window.innerHeight / 2,
+            size: 54, 
+            angle: 0,
+            scanRadius: 190
+        };
+
+        let oceanCreatures = [];
+        let hazards = [];
+        let marineSnow = [];
+        let healthFoods = [];
+
+        window.addEventListener("mousemove", (e) => {
+            shark.targetX = e.clientX;
+            shark.targetY = e.clientY;
+        });
+
+        function triggerFlash(color) {
+            screenFlash.active = true;
+            screenFlash.color = color;
+            setTimeout(() => { screenFlash.active = false; }, 150);
+        }
+
+        function initMarineSnow() {
+            for (let i = 0; i < 90; i++) {
+                marineSnow.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.6 + 0.4,
+                    speed: Math.random() * 0.3 + 0.1,
+                    opacity: Math.random() * 0.35 + 0.05
+                });
+            }
+        }
+
+        function spawnCreature() {
+            if (gameOver) return;
+            const fromLeft = Math.random() > 0.4;
+            
+            const speciesList = ["neon", "amber", "abyssal_angler", "shadow_serpent", "mermaid", "dead_body"];
+            const species = speciesList[Math.floor(Math.random() * speciesList.length)];
+            
+            let size = Math.random() * 5 + 16;
+            let speed = (Math.random() * 0.9 + 0.8) * (fromLeft ? 1 : -1);
+            
+            if (species === "shadow_serpent") {
+                size = 60;
+                speed = (Math.random() * 0.4 + 0.6) * (fromLeft ? 1 : -1);
+            } else if (species === "mermaid") {
+                size = 42;
+                speed = (Math.random() * 0.3 + 0.8) * (fromLeft ? 1 : -1);
+            } else if (species === "dead_body") {
+                size = 45;
+                speed = (Math.random() * 0.3 + 0.4) * -1; 
+            }
+
+            oceanCreatures.push({
+                x: fromLeft ? -200 : canvas.width + 200,
+                y: Math.random() * (canvas.height - 250) + 120,
+                species: species,
+                size: size,
+                speed: speed,
+                scanned: false,
+                opacity: 1.0,
+                pulse: 0,
+                waveMotion: Math.random() * 0.03 + 0.02
+            });
+            
+            setTimeout(spawnCreature, Math.random() * 600 + 400); 
+        }
+
+        function spawnHazard() {
+            if (gameOver) return;
+            const types = ["barrel", "naval_mine"];
+            hazards.push({
+                x: canvas.width + 100,
+                y: Math.random() * (canvas.height - 250) + 120,
+                type: types[Math.floor(Math.random() * types.length)],
+                speed: Math.random() * 1.2 + 1.2,
+                size: 26,
+                rotation: 0,
+                rotSpeed: Math.random() * 0.015 - 0.007
+            });
+            setTimeout(spawnHazard, Math.random() * 1500 + 1000);
+        }
+
+        function spawnHealthFood() {
+            if (gameOver) return;
+            healthFoods.push({
+                x: canvas.width + 100,
+                y: Math.random() * (canvas.height - 200) + 100,
+                size: 15,
+                speed: Math.random() * 1.2 + 1.8,
+                waveMotion: 0.1
+            });
+            setTimeout(spawnHealthFood, Math.random() * 2500 + 1500); 
+        }
+
+        function drawSharkBody(x, y, isFacingLeft) {
+            ctx.save();
+            ctx.translate(x, y);
+            if (isFacingLeft) ctx.scale(-1, 1);
+            ctx.rotate(shark.angle);
+
+            let s = shark.size;
+            let wag = Math.sin(globalTime * 0.12) * 5;
+
+            ctx.shadowColor = "rgba(1, 6, 15, 0.8)";
+            ctx.shadowBlur = 30; ctx.shadowOffsetY = 22;
+
+            let tailGrad = ctx.createLinearGradient(-s - 18, 0, -s, 0);
+            tailGrad.addColorStop(0, "#1e293b"); tailGrad.addColorStop(1, "#334155");
+            ctx.fillStyle = tailGrad; ctx.beginPath();
+            ctx.moveTo(-s + 6, 0);
+            ctx.quadraticCurveTo(-s - 6, -s/1.2 + wag, -s - 22, -s/1.1 + wag);
+            ctx.quadraticCurveTo(-s - 12, 0, -s - 22, s/1.1 + wag);
+            ctx.quadraticCurveTo(-s - 6, s/1.2 + wag, -s + 6, 0); ctx.fill();
+
+            let bodyGrad = ctx.createRadialGradient(s/3, -s/5, s/10, 0, 0, s);
+            bodyGrad.addColorStop(0, "#cbd5e1"); bodyGrad.addColorStop(0.3, "#475569"); 
+            bodyGrad.addColorStop(0.8, "#1e293b"); bodyGrad.addColorStop(1, "#090d16");   
+            ctx.fillStyle = bodyGrad; ctx.beginPath();
+            ctx.ellipse(0, 0, s, s/2.2, 0, 0, Math.PI * 2); ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+            let finGrad = ctx.createLinearGradient(-15, -s, 5, 0);
+            finGrad.addColorStop(0, "#475569"); finGrad.addColorStop(1, "#182232");
+            ctx.fillStyle = finGrad; ctx.beginPath();
+            ctx.moveTo(-12, -s/2.2 + 2); ctx.quadraticCurveTo(-24, -s - 2, -4, -s);
+            ctx.quadraticCurveTo(2, -s/2, 12, -s/2.2 + 2); ctx.fill();
+
+            let eyeGrad = ctx.createRadialGradient(s/1.6, -6, 0, s/1.6, -6, 3);
+            eyeGrad.addColorStop(0, "#ffffff"); eyeGrad.addColorStop(0.4, "#0284c7"); eyeGrad.addColorStop(1, "#020617");
+            ctx.fillStyle = eyeGrad; ctx.beginPath(); ctx.arc(s/1.6, -6, 3.5, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawCreatures(f) {
+            ctx.save();
+            ctx.translate(f.x, f.y);
+            if (f.speed < 0) ctx.scale(-1, 1);
+            ctx.globalAlpha = f.opacity;
+
+            let s = f.size;
+            let swing = Math.sin(globalTime * 0.08) * 6;
+
+            if (f.species === "mermaid") {
+                ctx.shadowColor = "rgba(6, 182, 212, 0.4)"; ctx.shadowBlur = 15;
+                let tailGrad = ctx.createLinearGradient(-30, 0, 0, 0);
+                tailGrad.addColorStop(0, "#22d3ee"); tailGrad.addColorStop(0.5, "#0d9488"); tailGrad.addColorStop(1, "#fbcfe8");
+                ctx.fillStyle = tailGrad;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-15, -12 + swing, -35, -5 + swing);
+                ctx.lineTo(-45, -15 + swing);
+                ctx.lineTo(-40, swing);
+                ctx.lineTo(-45, 15 + swing);
+                ctx.quadraticCurveTo(-15, 12 + swing, 0, 0); ctx.fill();
+
+                let torsoGrad = ctx.createLinearGradient(0, -5, 25, 5);
+                torsoGrad.addColorStop(0, "#fbcfe8"); torsoGrad.addColorStop(1, "#f472b6");
+                ctx.fillStyle = torsoGrad; ctx.beginPath();
+                ctx.ellipse(12, -2, 14, 7, -Math.PI/8, 0, Math.PI*2); ctx.fill();
+
+                ctx.fillStyle = "#e11d48"; ctx.beginPath();
+                ctx.arc(22, -8, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillRect(8, -12, 12, 10);
+            } 
+            else if (f.species === "dead_body") {
+                ctx.rotate(Math.PI / 5); 
+                ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10;
+                ctx.fillStyle = "#334155"; ctx.fillRect(-15, -8, 30, 15);
+                
+                let headGrad = ctx.createRadialGradient(20, -2, 1, 20, -2, 6);
+                headGrad.addColorStop(0, "#f1f5f9"); headGrad.addColorStop(1, "#94a3b8");
+                ctx.fillStyle = headGrad; ctx.beginPath(); ctx.arc(20, -2, 6, 0, Math.PI * 2); ctx.fill();
+                
+                ctx.fillStyle = "#0f172a"; ctx.beginPath(); ctx.arc(22, -3, 1.5, 0, Math.PI*2); ctx.arc(19, -1, 1.2, 0, Math.PI*2); ctx.fill();
+
+                ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(-15, 2); ctx.lineTo(-28, 8); 
+                ctx.moveTo(-15, -4); ctx.lineTo(-26, -2);
+                ctx.stroke();
+            }
+            else if (f.species === "shadow_serpent") {
+                ctx.shadowColor = "rgba(45, 212, 191, 0.3)"; ctx.shadowBlur = 15;
+                for (let i = 6; i >= 0; i--) {
+                    let segX = 15 - (i * 24);
+                    let segY = Math.sin(globalTime * 0.07 - i * 0.4) * 14;
+                    let r = s / (2.2 + i * 0.4);
+                    let segGrad = ctx.createRadialGradient(segX + 2, segY - 2, 1, segX, segY, r);
+                    segGrad.addColorStop(0, "#2dd4bf"); segGrad.addColorStop(0.5, "#0f766e"); segGrad.addColorStop(1, "#042f2e");
+                    ctx.fillStyle = segGrad; ctx.beginPath(); ctx.arc(segX, segY, r, 0, Math.PI * 2); ctx.fill();
+                    if (i > 0) {
+                        ctx.strokeStyle = "#14b8a6"; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(segX, segY - r); ctx.lineTo(segX - 4, segY - r - 8); ctx.stroke();
+                    }
+                }
+                let headY = Math.sin(globalTime * 0.07) * 14;
+                let headGrad = ctx.createRadialGradient(32, headY - 3, 2, 30, headY, s / 2.3);
+                headGrad.addColorStop(0, "#99f6e4"); headGrad.addColorStop(1, "#115e59");
+                ctx.fillStyle = headGrad; ctx.beginPath(); ctx.ellipse(30, headY, s/2.2, s/3.2, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#ff0055"; ctx.beginPath(); ctx.arc(36, headY - 4, 2.5, 0, Math.PI * 2); ctx.fill();
+            } 
+            else if (f.species === "abyssal_angler") {
+                let grad = ctx.createRadialGradient(4, -4, 2, 0, 0, s);
+                grad.addColorStop(0, "#64748b"); grad.addColorStop(0.6, "#1e293b"); grad.addColorStop(1, "#090d16");
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.ellipse(0, 0, s, s/1.3, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "rgba(241, 245, 249, 0.85)"; ctx.beginPath();
+                ctx.moveTo(s/2.2, 2); ctx.lineTo(s/1.6, 7); ctx.lineTo(s/3, 5);
+                ctx.moveTo(s/3, -2); ctx.lineTo(s/1.7, 2); ctx.lineTo(s/4, 1); ctx.fill();
+                ctx.strokeStyle = "#475569"; ctx.lineWidth = 1.5; ctx.beginPath();
+                ctx.moveTo(0, -s/2); ctx.quadraticCurveTo(s/1.2, -s * 1.1, s * 1.1, -s/2); ctx.stroke();
+                let bulb = ctx.createRadialGradient(s * 1.1, -s/2, 0, s * 1.1, -s/2, 7);
+                bulb.addColorStop(0, "#ffffff"); bulb.addColorStop(0.3, "#22d3ee"); bulb.addColorStop(1, "rgba(0,0,0,0)");
+                ctx.fillStyle = bulb; ctx.beginPath(); ctx.arc(s * 1.1, -s/2, 7, 0, Math.PI * 2); ctx.fill();
+            } 
+            else {
+                let isNeon = f.species === "neon";
+                let primary = isNeon ? "#38bdf8" : "#f97316";
+                let dark = isNeon ? "#1e3a8a" : "#7c2d12";
+                let fishSwing = Math.sin(globalTime * f.waveMotion) * 6;
+                ctx.fillStyle = primary; ctx.globalAlpha = f.opacity * 0.6; ctx.beginPath();
+                ctx.moveTo(-s, fishSwing); ctx.lineTo(-s - 8, -s/1.8 + fishSwing); ctx.lineTo(-s - 8, s/1.8 + fishSwing); ctx.fill();
+                ctx.globalAlpha = f.opacity;
+                let grad = ctx.createRadialGradient(s/3, -s/5, 1, 0, 0, s);
+                grad.addColorStop(0, "#ffffff"); grad.addColorStop(0.3, primary); grad.addColorStop(1, dark);
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.ellipse(0, 0, s, s/1.6, 0, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function drawHazards(h) {
+            ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.rotation);
+            ctx.shadowColor = "rgba(0, 0, 0, 0.6)"; ctx.shadowBlur = 15; ctx.shadowOffsetY = 12;
+            if (h.type === "barrel") {
+                let grad = ctx.createLinearGradient(-13, 0, 13, 0);
+                grad.addColorStop(0, "#78350f"); grad.addColorStop(0.2, "#b45309"); grad.addColorStop(0.5, "#d97706"); grad.addColorStop(0.8, "#78350f"); grad.addColorStop(1, "#451a03");
+                ctx.fillStyle = grad; ctx.fillRect(-13, -20, 26, 40);
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.35)"; ctx.lineWidth = 1;
+                for(let i = -7; i <= 7; i += 4) { ctx.beginPath(); ctx.moveTo(i, -20); ctx.lineTo(i, 40); ctx.stroke(); }
+                ctx.fillStyle = "#334155"; ctx.fillRect(-13.5, -10, 27, 3.5); ctx.fillRect(-13.5, 8, 27, 3.5);
+            } else {
+                let grad = ctx.createRadialGradient(-4, -4, 2, 0, 0, 15);
+                grad.addColorStop(0, "#64748b"); grad.addColorStop(0.7, "#1e293b"); grad.addColorStop(1, "#020617");
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#0f172a"; ctx.lineWidth = 3;
+                for(let i=0; i<6; i++) { ctx.rotate(Math.PI / 3); ctx.fillRect(-2, -20, 4, 7); }
+                if (globalTime % 30 < 15) {
+                    let redGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 5);
+                    redGlow.addColorStop(0, "#ffffff"); redGlow.addColorStop(0.4, "#ef4444"); redGlow.addColorStop(1, "rgba(0,0,0,0)");
+                    ctx.fillStyle = redGlow; ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
+
+        function drawHealthFood(hf) {
+            ctx.save(); ctx.translate(hf.x, hf.y);
+            ctx.shadowColor = "#f59e0b"; ctx.shadowBlur = 10;
+            let foodGrad = ctx.createRadialGradient(3, -2, 1, 0, 0, hf.size);
+            foodGrad.addColorStop(0, "#fff"); foodGrad.addColorStop(0.5, "#fbbf24"); foodGrad.addColorStop(1, "#b45309");
+            ctx.fillStyle = foodGrad; ctx.beginPath(); ctx.ellipse(0, 0, hf.size, hf.size/1.8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#10b981"; ctx.font = "bold 14px system-ui"; ctx.fillText("♥", -5, -11);
+            ctx.restore();
+        }
+
+        function update() {
+            if (gameOver) return;
+            globalTime++;
+
+            let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            bgGrad.addColorStop(0, "#03111c"); bgGrad.addColorStop(0.6, "#01070d"); bgGrad.addColorStop(1, "#000103");   
+            ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 3; i++) {
+                let drift = Math.sin(globalTime * 0.007 + i * 15) * 45;
+                let rayGrad = ctx.createLinearGradient(150 + drift, 0, 300 + drift, canvas.height);
+                rayGrad.addColorStop(0, `rgba(14, 165, 233, ${0.035 - i * 0.01})`); rayGrad.addColorStop(1, "rgba(0,0,0,0)");
+                ctx.fillStyle = rayGrad; ctx.beginPath();
+                ctx.moveTo(80 + drift + i * 150, 0); ctx.lineTo(220 + drift + i * 160, 0);
+                ctx.lineTo(400 + drift * 1.2 + i * 190, canvas.height); ctx.lineTo(30 + drift * 1.2 + i * 60, canvas.height); ctx.fill();
+            }
+
+            marineSnow.forEach(b => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+                b.y -= b.speed; b.x += Math.sin(globalTime * 0.005 + b.r) * 0.08;
+                if (b.y < 0) { b.y = canvas.height; b.x = Math.random() * canvas.width; }
+            });
+
+            let dx = shark.targetX - shark.x; let dy = shark.targetY - shark.y;
+            shark.x += dx * 0.05; shark.y += dy * 0.05; shark.angle = dy * 0.0016;
+
+            let pulseWave = Math.sin(globalTime * 0.045) * 8;
+            let glowGrad = ctx.createRadialGradient(shark.x, shark.y, shark.size * 0.4, shark.x, shark.y, shark.scanRadius + pulseWave);
+            glowGrad.addColorStop(0, "rgba(14, 165, 233, 0.18)"); glowGrad.addColorStop(0.6, "rgba(56, 189, 248, 0.025)"); glowGrad.addColorStop(1, "rgba(14, 165, 233, 0)");
+            ctx.fillStyle = glowGrad; ctx.beginPath(); ctx.arc(shark.x, shark.y, shark.scanRadius + pulseWave, 0, Math.PI * 2); ctx.fill();
+
+            drawSharkBody(shark.x, shark.y, shark.targetX < shark.x);
+
+            for (let k = healthFoods.length - 1; k >= 0; k--) {
+                let hf = healthFoods[k]; hf.x -= hf.speed;
+                hf.y += Math.sin(globalTime * hf.waveMotion) * 0.6;
+                drawHealthFood(hf);
+
+                let distanceToMouth = Math.hypot(shark.x - hf.x, shark.y - hf.y);
+                if (distanceToMouth < 42) {
+                    health += 25; if (health > 100) health = 100;
+                    healthFill.style.width = health + "%";
+                    triggerFlash("rgba(16, 185, 129, 0.25)"); 
+                    healthFoods.splice(k, 1);
+                    continue;
+                }
+                if (hf.x < -50) healthFoods.splice(k, 1);
+            }
+
+            for (let i = oceanCreatures.length - 1; i >= 0; i--) {
+                let f = oceanCreatures[i]; f.x += f.speed;
+                drawCreatures(f);
+
+                let distance = Math.hypot(shark.x - f.x, shark.y - f.y);
+                if (distance < (shark.scanRadius - 5) && !f.scanned) {
+                    f.scanned = true;
+                    if (f.species === "mermaid") score += 50;
+                    else if (f.species === "dead_body") score += 30;
+                    else if (f.species === "shadow_serpent") score += 40;
+                    else score += 10;
+                    
+                    scoreEl.innerText = score + " TB"; f.pulse = 20;
+                }
+
+                if (f.scanned) {
+                    f.opacity -= 0.02; 
+                    if (f.opacity <= 0) { oceanCreatures.splice(i, 1); continue; }
+                }
+
+                if (f.pulse > 0) {
+                    ctx.strokeStyle = `rgba(56, 189, 248, ${f.pulse / 20})`; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(f.x, f.y, 35 - f.pulse, 0, Math.PI * 2); ctx.stroke(); f.pulse--;
+                }
+                if (!f.scanned && (f.x < -210 || f.x > canvas.width + 210)) oceanCreatures.splice(i, 1);
+            }
+
+            for (let j = hazards.length - 1; j >= 0; j--) {
+                let h = hazards[j]; h.x -= h.speed; h.rotation += h.rotSpeed;
+                drawHazards(h);
+
+                let dist = Math.hypot(shark.x - h.x, shark.y - h.y);
+                if (dist < 42) {
+                    health -= 25; if (health < 0) health = 0;
+                    healthFill.style.width = health + "%";
+                    triggerFlash("rgba(244, 63, 94, 0.25)"); 
+                    hazards.splice(j, 1);
+                    if (health <= 0) endGame(false);
+                    continue;
+                }
+                if (h.x < -120) hazards.splice(j, 1);
+            }
+
+            if (screenFlash.active) {
+                ctx.fillStyle = screenFlash.color; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            ctx.fillStyle = "#010307"; ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            requestAnimationFrame(update);
+        }
+
+        function runTimer() {
+            gameTimer = setInterval(() => {
+                timeLeft--; timeEl.innerText = timeLeft;
+                if (timeLeft <= 0) endGame(true);
+            }, 1000);
+        }
+
+        // 🚀 बैकएंड से लीडरबोर्ड डेटा मंगाकर टेबल में सेट करने का फ़ंक्शन
+        function updateLeaderboardUI(list) {
+            leaderboardRows.innerHTML = ""; // पुराना डेटा साफ़ करो
+            
+            if(list.length === 0) {
+                leaderboardRows.innerHTML = `<tr><td colspan="4" style="color:#64748b;">No missions completed yet!</td></tr>`;
+                return;
+            }
+
+            list.forEach((item, index) => {
+                const rank = index + 1;
+                let rankClass = "";
+                if(rank === 1) rankClass = "rank-1";
+                else if(rank === 2) rankClass = "rank-2";
+                else if(rank === 3) rankClass = "rank-3";
+
+                const row = `
+                    <tr>
+                        <td class="${rankClass}">#${rank}</td>
+                        <td style="color:#38bdf8; font-weight:bold;">${item.score} TB</td>
+                        <td>${item.status}</td>
+                        <td style="color:#94a3b8; font-size:14px;">${item.date}</td>
+                    </tr>
+                `;
+                leaderboardRows.innerHTML += row;
+            });
+        }
+
+        async function sendDataToBackend(survived) {
+            try {
+                const response = await fetch('/api/save-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        score: score, 
+                        survived: survived, 
+                        timeLeft: timeLeft 
+                    })
+                });
+                const data = await response.json();
+                if(data.status === "success") {
+                    // 🎉 बैकएंड से तुरंत टॉप 5 लिस्ट मिली, उसे UI में भेज दो!
+                    updateLeaderboardUI(data.leaderboard);
+                }
+            } catch (err) {
+                console.error("❌ Sync Error:", err);
+                leaderboardRows.innerHTML = `<tr><td colspan="4" style="color:#f43f5e;">Failed to load ranking logs.</td></tr>`;
+            }
+        }
+
+        function endGame(survived) {
+            gameOver = true; 
+            clearInterval(gameTimer);
+            
+            gameOverScreen.style.display = "flex";
+            overTitle.innerText = survived ? "🦈 MISSION SURVEY COMPLETE" : "🚨 SHARK CRITICALLY INJURED";
+            overTitle.style.color = survived ? "#38bdf8" : "#f43f5e";
+            overMsg.innerText = `Total Forensic Bio-Data Transferred: ${score} Terabytes.`;
+
+            sendDataToBackend(survived);
+        }
+
+        function startEngine() {
+            initMarineSnow();
+            spawnCreature();
+            spawnHazard();
+            spawnHealthFood();
+            runTimer();
+            update();
+        }
+
+        startEngine();
+    </script>
+</body>
+</html>

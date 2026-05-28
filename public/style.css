@@ -1,0 +1,89 @@
+:root {
+    --primary-blue: #0077b6;
+    --dark-blue: #03045e;
+    --light-blue: #90e0ef;
+    --mint-green: #00b4d8;
+    --white: #ffffff;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(180deg, #caf0f8 0%, #90e0ef 50%, #0077b6 100%);
+    color: var(--dark-blue);
+    min-height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: rgba(3, 4, 94, 0.85);
+    color: var(--white);
+    border-bottom: 5px solid var(--mint-green);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.info-section {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    margin-bottom: 40px;
+}
+
+.dynamic-facts {
+    background: var(--light-blue);
+    padding: 15px;
+    border-left: 5px solid var(--primary-blue);
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.card-container {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.card {
+    background: var(--white);
+    flex: 1;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 25px;
+    text-decoration: none;
+    color: white;
+    border-radius: 25px;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background 0.2s;
+}
+
+.btn-game { background-color: #e63946; }
+.btn-quiz { background-color: #2a9d8f; }
+.btn:hover { opacity: 0.9; }
+
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 50px;
+    color: var(--dark-blue);
+    font-weight: bold;
+}
